@@ -1,0 +1,12 @@
+SomassSockeyeAnnual <- read_xlsx(
+  "//dcbcpbsna01a.ENT.dfo-mpo.ca/PBS_SA_DFS$/SCD_Stad/WCVI/Sockeye/SOMASS/Data/ESCAPEMENT_PROGRAM/SomassEsc.xlsx",
+  sheet = "Sockeye",
+  na = ""
+) |>
+  select(1:7) |>
+  rename(Sockeye = 6, SockeyeJack = 7) |>
+  pivot_longer(cols = c(Sockeye, SockeyeJack), names_to = "species", values_to = "count") |>
+  rename_with(tolower) |>
+  mutate(date = make_date(year, month, day)) |>
+  group_by(year, system, species) |>
+  summarise(annual_escapement = round(sum(count, na.rm = TRUE), digits = 0), .groups = "drop")

@@ -60,16 +60,9 @@ SomassSockeyeAnnual <- read_xlsx(
   group_by(year, system, species) |>
   summarise(annual_escapement = round(sum(count, na.rm = TRUE), digits = 0), .groups = "drop")
 
-# pre-filter to Sockeye species and set factor order BEFORE wrapping in
-# SharedData, since dplyr verbs (filter/mutate) don't work on SharedData objects
-# — only the ggplot/plotly rendering step can operate on it directly
-sockeye_plot_data <- SomassSockeyeAnnual %>% 
-  filter(species %in% c("Sockeye", "SockeyeJack")) %>% 
-  mutate(species = factor(species, levels = c("Sockeye", "SockeyeJack")))
-
-# wrap in a SharedData object so a crosstalk filter widget
+# wrap the Sockeye data in a SharedData object so a crosstalk filter widget
 # can filter the chart client-side (no Shiny server needed)
-sockeye_shared <- SharedData$new(sockeye_plot_data, group = "sockeye_filter")
+sockeye_shared <- SharedData$new(SomassSockeyeAnnual, group = "sockeye_filter")
 
 # helper to build a full-panel interactive stacked bar, jacks on top
 make_escapement_plot <- function(data, species_levels, title = "") {
@@ -78,28 +71,6 @@ make_escapement_plot <- function(data, species_levels, title = "") {
     mutate(species = factor(species, levels = species_levels))
 
   p <- ggplot(plot_data, aes(
-      x = year, y = annual_escapement, fill = species,
-      text = paste0("Year: ", year,
-                     "<br>Species: ", species,
-                     "<br>Escapement: ", scales::comma(annual_escapement))
-    )) +
-    geom_col(position = position_stack(reverse = TRUE)) +
-    scale_fill_manual(values = somass_pal) +
-    labs(title = title, x = NULL, y = "Escapement") +
-    somass_theme
-
-  ggplotly(p, tooltip = "text") %>% 
-    layout(
-      autosize = TRUE,
-      legend = list(orientation = "h", y = -0.15, title = list(text = ""))
-    ) %>% 
-    config(responsive = TRUE)
-}
-
-# variant that skips the dplyr pre-filter step, for SharedData input
-# (species filtering already happened before the data was wrapped)
-make_escapement_plot_shared <- function(shared_data, title = "") {
-  p <- ggplot(shared_data, aes(
       x = year, y = annual_escapement, fill = species,
       text = paste0("Year: ", year,
                      "<br>Species: ", species,
@@ -158,5 +129,8 @@ filter_select("system_filter", "System", sockeye_shared, ~system)
 ### 
 
 ```{r}
-make_escapement_plot_shared(sockeye_shared)
+make_escapement_plot(
+  sockeye_shared,
+  species_levels = c("Sockeye", "SockeyeJack")
+)
 ```
