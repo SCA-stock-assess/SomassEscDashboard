@@ -120,32 +120,20 @@ make_escapement_plot(
 ### 
 
 ```{r}
-sockeye_pal <- c(
-  "GCL Adult"  = "#2C5F7C",
-  "GCL Jack"   = "#8FB9CC",
-  "SPR Adult"  = "#B5763E",
-  "SPR Jack"   = "#E8C9A0"
-)
-
 sockeye_plot_data <- SomassSockeyeAnnual %>% 
   mutate(
-    system_label = recode(system, "GCL" = "Great Central Lake Sockeye", "SPR" = "Sproat Lake Sockeye"),
-    age_class = if_else(species == "SockeyeJack", "Jack", "Adult"),
-    fill_group = factor(
-      paste(system, age_class),
-      levels = c("GCL Adult", "GCL Jack", "SPR Adult", "SPR Jack")
-    )
+    species = factor(species, levels = c("Sockeye", "SockeyeJack")),
+    system_label = recode(system, "GCL" = "Great Central Lake", "Sproat" = "Sproat Lake")
   )
 
 p_sockeye <- ggplot(sockeye_plot_data, aes(
-    x = year, y = annual_escapement, fill = fill_group,
+    x = year, y = annual_escapement, fill = species,
     text = paste0("Year: ", year,
-                   "<br>", age_class,
+                   "<br>Species: ", species,
                    "<br>Escapement: ", scales::comma(annual_escapement))
   )) +
   geom_col(position = position_stack(reverse = TRUE)) +
-  scale_fill_manual(values = sockeye_pal) +
-  scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = somass_pal) +
   facet_wrap(~system_label, ncol = 1) +
   labs(x = NULL, y = "Escapement") +
   somass_theme +
