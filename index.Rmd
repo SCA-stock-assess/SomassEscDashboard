@@ -75,7 +75,7 @@ make_escapement_plot <- function(data, species_levels, title = "") {
     )) +
     geom_col(position = position_stack(reverse = TRUE)) +
     scale_fill_manual(values = somass_pal) +
-    labs(title = title, x = NULL, y = "Escapement") +
+    labs(title = title, x = NULL, y = "") +
     somass_theme
 
   ggplotly(p, tooltip = "text") %>% 
@@ -147,7 +147,7 @@ p_sockeye <- ggplot(sockeye_plot_data, aes(
   scale_fill_manual(values = sockeye_pal) +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~system_label, ncol = 1) +
-  labs(x = NULL, y = "Escapement") +
+  labs(x = NULL, y = "") +
   somass_theme +
   theme(strip.text = element_text(face = "bold", size = 12, hjust = 0))
 
@@ -158,3 +158,28 @@ ggplotly(p_sockeye, tooltip = "text") %>%
   ) %>% 
   config(responsive = TRUE)
 ```
+
+# Sproat River Coho
+
+## Row
+
+### 
+```{r}
+SproatEscAnnual <- read_xlsx(
+  "//dcbcpbsna01a.ENT.dfo-mpo.ca/PBS_SA_DFS$/SCD_Stad/WCVI/Sockeye/SOMASS/Data/ESCAPEMENT_PROGRAM/SomassEsc.xlsx",
+  sheet = "Sproat CN & CO",
+  na = ""
+) |>
+  select(1:9) |>
+  pivot_longer(cols = Coho:ChinookJack, names_to = "species", values_to = "count") |>
+  rename_with(tolower) |>
+  mutate(date = as.Date(date)) |>
+  group_by(year, species) |>
+  summarise(annual_escapement = round(sum(count, na.rm = TRUE),digits = 0), .groups = "drop")
+
+make_escapement_plot(
+  SproatEscAnnual,
+  species_levels = c("Coho", "CohoJack")
+)
+```
+
